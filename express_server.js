@@ -15,10 +15,17 @@ app.get("/", (req, res) => {
 });
 
 
-// other URi / route on a get req specifically on path /url
+// other URi / route on a get req specifically on path /url.json
+// we can see the response - the database - will be in json so string
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
+
+// other route
+app.get("/hello", (req, res) => {
+  res.send("<html><body>Hello <b>World</b></body></html>\n");
+});
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
