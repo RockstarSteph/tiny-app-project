@@ -11,6 +11,19 @@ var urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+//adding a route handler for /urls and res.render to pass to our template
+app.get("/urls", (req, res) => {
+  let templateVars = { urls: urlDatabase };
+  res.render("urls_index", templateVars); // param 1 file that's outputed to user. 2nd param is what we're passing to the file
+});
+
+// route + render short URL to Long URL
+app.get("/urls/:shortURL", (req, res) => {
+  const shortUrlParam = req.params.shortUrl;
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[shortUrlParam] };
+  res.render("urls_show", templateVars);
+});
+
 // registers a handler on the root path "/"
 //whenever browser goes to url - registers req and sends Hello as response.
 app.get("/", (req, res) => {
