@@ -9,15 +9,20 @@
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
   <title>TinyApp</title>
-</head>
+</head><button type="submit" class="btn btn-primary">Submit</button>
 <body style="font-size:20px; padding:50px;">
 
     <% include ./partials/_header %>
 
-  <%= urls['b2xVn2'] %>
+  <!-- <%= urls['b2xVn2'] %> -->
+
 <ul>
+
   <% for (key in urls) { %>
+    <form method="POST" action="/urls/9sm5xK/delete">...</form>
+
   <li>  <%= key %> - <%= urls[key]%> </li>
+     <button type="Delete mothafucka!" class="btn btn-primary">Delete that ugly link</button>
 <% }; %>
 <li> <a href="#"> link </li>
 </ul>

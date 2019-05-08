@@ -35,12 +35,6 @@ app.get("/urls", (req, res) => {
 
 
 
-
-
-
-
-
-
 // Add page - Get route to display new page for adding urls
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
@@ -58,12 +52,21 @@ app.post("/urls", (req, res) => {
 });
 
 
-
+// adding a delete button on main page for each key/value pair representing short link & long link
+// we're not in the body donc pas req.body - on est dans l'addresse url de la page thats why req.params - parametre de notre requete
+app.post("/urls/:shortURL/delete", (req, res) => {
+delete urlDatabase[req.params.shortUrl];
+//what's our input
+// what's our output
+// where to say it's a button
+res.redirect("/urls")
+});
 
 
 
 
 // route + render short URL to Long URL
+// wild card - any key in our app.
 app.get("/urls/:shortURL", (req, res) => {
   const shortUrlParam = req.params.shortUrl;
   let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[shortUrlParam] };
