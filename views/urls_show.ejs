@@ -14,8 +14,22 @@
 </head>
 <body style="font-size:20px; padding:50px;">
 
+<% include ./partials/_header %>
+
   <%= shortURL %>
   <%= longURL %>
+
+      <form class="form-inline" action="/urls/<%=shortURL%>/edit" method="POST">
+      <div class="form-group mb-2">
+        <label for="longURL">Edit that URL:</label>
+
+        <!-- The input tag has an important attribute as well: name. This attribute identifies the data we are sending; in this case, it adds the key longURL to the data we'll be sending in the body of our POST request. -->
+
+
+        <input class="form-control" type="text" name="longURL" placeholder="http://" style="width: 300px; margin: 1em">
+        <button type="edit" class="btn btn-primary">Edit</button>
+      </div>
+    </form>
 
 </body>
 </html>

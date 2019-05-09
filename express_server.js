@@ -34,6 +34,14 @@ app.get("/urls", (req, res) => {
 });
 
 
+//adding a Edit function /update short link and redirect to main page
+app.post("/urls/:shortURL/edit", (req, res) =>{
+let shortUrl = req.params.shortURL
+console.log(req.params.shortURL, req.body.longURL)
+urlDatabase[shortUrl] = req.body.longURL;
+
+res.redirect("/urls")
+});
 
 // Add page - Get route to display new page for adding urls
 app.get("/urls/new", (req, res) => {
@@ -41,12 +49,22 @@ app.get("/urls/new", (req, res) => {
 });
 
 
+// add the page for login - get route to display the login page
+app.get("/urls/login", (req, res) => {
+  res.render("_header");
+});
+
+
+// /u/:ShortURL, get the longURL + redirect
+
+
+
 //Post route for form submission to not our main page yet but yet another stupid display page.
 //req.body (ties into body parser) - gets data from Form to be able to display it
 // data sent to req.body is from this : from our urls_new file - The input tag has an important attribute as well: name. This attribute identifies the data we are sending; in this case, it adds the key longURL to the data we'll be sending in the body of our POST request.
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
-  let cle = generateRandomString()
+  let cle = generateRandomString();
   urlDatabase[cle] = req.body.longURL
   res.redirect("/urls/"+cle);         // Respond with 'Ok' (we will replace this)
 });
@@ -55,7 +73,8 @@ app.post("/urls", (req, res) => {
 // adding a delete button on main page for each key/value pair representing short link & long link
 // we're not in the body donc pas req.body - on est dans l'addresse url de la page thats why req.params - parametre de notre requete
 app.post("/urls/:shortURL/delete", (req, res) => {
-delete urlDatabase[req.params.shortUrl];
+console.log(req.params.shortURL, urlDatabase[req.params.shortURL]);
+delete urlDatabase[req.params.shortURL];
 //what's our input
 // what's our output
 // where to say it's a button
@@ -70,6 +89,7 @@ res.redirect("/urls")
 app.get("/urls/:shortURL", (req, res) => {
   const shortUrlParam = req.params.shortUrl;
   let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[shortUrlParam] };
+  console.log(urlDatabase[shortUrlParam]);
   res.render("urls_show", templateVars);
 });
 
