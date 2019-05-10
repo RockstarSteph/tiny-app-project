@@ -34,6 +34,13 @@ function addUserToDb(email, password){
 }
 
 
+function addShortURLtoDatabase(id, surl, lurl){
+  let userId = req.cookies['user-id']
+let shortUrl = req.params.shortURL
+let longUrl = req.body.longURL
+urlDatabase[shortUrl] = { longURL:longUrl, id: userId };
+}
+
 
 //
 
@@ -48,10 +55,16 @@ const findUser = email => Object.values(usersDatabase).find(userObj => userObj.e
 
 
 
+// var urlDatabase = {
+//   "b2xVn2": {"http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
+
 var urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
+
 
 const usersDatabase = {
   "userRandomID": {
@@ -69,7 +82,20 @@ const usersDatabase = {
 //main page diplay - adding a route handler for /urls and res.render to pass to our template
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlDatabase, user: usersDatabase[req.cookies['user-id']]};
-  res.render("urls_index", templateVars); // param 1 file that's outputed to user. 2nd param is what we're passing to the file
+   // res.render("urls_index", templateVars); param 1 file that's outputed to user. 2nd param is what we're passing to the file
+
+
+  if (req.cookies['user-id']) {
+    res.render("urls_index", templateVars);
+    // let userId = req.cookies['user-id']
+    // let shortUrl = generateRandomString()
+    // let longUrl = req.body.longURL
+    // urlDatabase[shortUrl] = { longURL:longUrl, id: userId };
+    // console.log(urlDatabase)
+} else {
+  res.redirect('login');
+  res.send("You need to login to see your URLs")
+}
 });
 
 
@@ -84,18 +110,29 @@ app.post("/logout", (req, res) =>{
 
 //adding a Edit function /update short link and redirect to main page
 app.post("/urls/:shortURL/edit", (req, res) =>{
-let shortUrl = req.params.shortURL
-console.log(req.params.shortURL, req.body.longURL)
-urlDatabase[shortUrl] = req.body.longURL;
+  if (req.cookies['user-id']) {
+  let shortUrl = req.params.shortURL
+  console.log(req.params.shortURL, req.body.longURL)
+  urlDatabase[shortUrl] = req.body.longURL;
 
-res.redirect("/urls")
+  res.redirect("/urls") } else {
+    res.redirect("/login")
+  }
 });
 
 // Add page - Get route to display new page for adding urls
 app.get("/urls/new", (req, res) => {
-  let templateVars = { user: usersDatabase[req.cookies['user-id']]};
-  res.render("urls_new", templateVars);
+let templateVars = { user: usersDatabase[req.cookies['user-id']]};
+  if (req.cookies['user-id']) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login");
+  }
+
+  //res.render("urls_new", templateVars);
 });
+
+
 
 
 // add the page for login - get route to display the login page
@@ -175,13 +212,30 @@ app.post("/registration", (req, res) => {
 //Post route for form submission to not our main page yet but yet another stupid display page.
 //req.body (ties into body parser) - gets data from Form to be able to display it
 // data sent to req.body is from this : from our urls_new file - The input tag has an important attribute as well: name. This attribute identifies the data we are sending; in this case, it adds the key longURL to the data we'll be sending in the body of our POST request.
+// app.post("/urls", (req, res) => {
+//   console.log(req.body);  // Log the POST request body to the console
+//   let cle = generateRandomString();
+//   urlDatabase[cle] = req.body.longURL
+//   res.redirect("/urls/"+cle);         // Respond with 'Ok' (we will replace this)
+// });
+
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  let cle = generateRandomString();
-  urlDatabase[cle] = req.body.longURL
-  res.redirect("/urls/"+cle);         // Respond with 'Ok' (we will replace this)
+    let userId = req.cookies['user-id']
+    let shortUrl = generateRandomString()
+    let longUrl = req.body.longURL
+    urlDatabase[shortUrl] = { longURL:longUrl, id: userId };
+    console.log(urlDatabase)
+    res.redirect("/urls")
+
 });
 
+app.get("/u/:shortURL", (req, res) =>{
+  //urlDatabase[shortUrl]
+  let shortURL =  req.params.shortURL
+  let externalSite = urlDatabase[shortURL]["longURL"];
+  //urlDatabase[shortUrl] = req.body.longURL;
+  res.redirect(externalSite);
+});
 
 // adding a delete button on main page for each key/value pair representing short link & long link
 // we're not in the body donc pas req.body - on est dans l'addresse url de la page thats why req.params - parametre de notre requete
@@ -202,6 +256,9 @@ res.redirect("/urls")
 app.get("/urls/:shortURL", (req, res) => {
   const shortUrlParam = req.params.shortUrl;
   let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[shortUrlParam], user: usersDatabase[req.cookies['user-id']] };
+
+  //addUserIdtoUrlDatabase()
+
   console.log(urlDatabase[shortUrlParam]);
   res.render("urls_show", templateVars);
 });
