@@ -2,7 +2,24 @@
 <header> <h1> Appl Tiny </h1></header>
 <h2> shortens your long ass link in one click </h2>
 
-  <form method="GET" action="/urls/login">
+<!-- user clicked on login button on main page or other ones - this action should display our login page through a GET on the server-->
+<!--   <form method="GET" action="/urls/login">
 
        <button type="login" class="btn btn-primary"> Login </button>
-    </form>
+    </form> -->
+
+
+
+<!-- <h5> Welcome <%= username %> !</h5> -->
+
+<% if(username){ %>
+   <h5><%= username %></h5>
+     <form method="POST" action="/logout">
+       <button type="logout" class="btn btn-primary" style= "margin:1em;" >Logout</button>
+     </form>
+ <% } else{ %>
+   <h5>you need to log in</h5>
+<% } %>
+
+<a href="/login" class="btn btn-primary">login</a>
+<a href="/registration" class="btn btn-primary">registration</a>

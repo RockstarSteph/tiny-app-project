@@ -14,7 +14,7 @@
 
     <% include ./partials/_header %>
 
-  <!-- <%= urls['b2xVn2'] %> -->
+
 
 <ul>
 
@@ -25,11 +25,11 @@
 
   <li>  <%= key %> - <%= urls[key]%> </li>
      <form method="POST" action="/urls/<%=key%>/delete">
-       <button type="Delete mothafucka!" class="btn btn-primary">Delete that ugly link</button>
+       <button type="Delete mothafucka!" class="btn btn-primary" style= "margin:1em;" >Delete that ugly link</button>
      </form>
 
      <form method="GET" action="/urls/<%=key%>">
-       <button type="Edit!" class="btn btn-primary">Edit yo link</button>
+       <button type="Edit!" class="btn btn-primary" style="margin:1em;">Edit yo link</button>
     </form>
 <% }; %>
 <li> <a href="#"> link </li>

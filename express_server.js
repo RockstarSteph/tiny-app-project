@@ -2,7 +2,7 @@
 var express = require("express");
 var app = express();
 var PORT = 8080; // default port 8080
-
+const uuid = require('uuid/v4');
 
 // Setting the Express app to use EJS as its templating engine for the HTML
 app.set("view engine", "ejs");
@@ -12,6 +12,8 @@ app.set("view engine", "ejs");
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
+const cookieParser = require('cookie-parser')
+app.use(cookieParser());
 
 // function to generate ID for short URL when inputing a long URL on form
 // this will be called in our Post route - this is essentiallly what it would provide - urlDatabase[nouveaucodecourt] = valeurduinput
@@ -21,18 +23,51 @@ return randomShortUrlId;
 }
 
 
+
+
+ //
+
+function addUserToDb(email, password){
+  let userId = generateRandomString();
+  usersDatabase[userId] = {id: userId, email,password};
+  return userId;
+}
+
+
+
+//
+
+
+
 var urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
+const usersDatabase = {
+  "userRandomID": {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+}
 
 //main page diplay - adding a route handler for /urls and res.render to pass to our template
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase };
+  let templateVars = { urls: urlDatabase, username:req.cookies['user-id']};
   res.render("urls_index", templateVars); // param 1 file that's outputed to user. 2nd param is what we're passing to the file
 });
 
+app.post("/logout", (req, res) =>{
+  //res.cookie('user-id', null);
+  res.clearCookie('user-id');
+  res.redirect("/login");
+})
 
 //adding a Edit function /update short link and redirect to main page
 app.post("/urls/:shortURL/edit", (req, res) =>{
@@ -45,15 +80,59 @@ res.redirect("/urls")
 
 // Add page - Get route to display new page for adding urls
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  let templateVars = { username:req.cookies['user-id']};
+  res.render("urls_new", templateVars);
 });
 
 
 // add the page for login - get route to display the login page
-app.get("/urls/login", (req, res) => {
-  res.render("_header");
+app.get("/login", (req, res) => {
+  let templateVars = {feeling:"cloudy with chance of meatballs", username:req.cookies['user-id']};
+  res.render("login", templateVars);
 });
 
+// login page with submit form
+app.post("/login", (req, res) => {
+
+ const {email, password} = req.body;
+  // let username = req.body.username
+  // let email = req.body.email;
+  // let password = req.body.password;
+
+  // find user in the Database
+  //if (userId)
+  console.log({email,password});
+
+  const userId = addUserToDb(email,password)
+  res.cookie('user-id', userId);
+
+  console.log(usersDatabase);
+  res.redirect("/urls");
+
+});
+
+// add the page for registration - get route to display the login page
+app.get("/registration", (req, res) => {
+  let templateVars = { username:req.cookies['user-id']};
+  res.render("registration",templateVars);
+});
+
+//Post route to login page for page to exit with our login form
+
+app.post("/registration", (req, res) => {
+
+ const {email, password} = req.body;
+  // let username = req.body.username
+  // let email = req.body.email;
+  // let password = req.body.password;
+
+// add new user to the Database
+let aUser = addUserToDb(email, password);
+
+console.log(usersDatabase);
+  res.redirect("/urls");
+
+});
 
 // /u/:ShortURL, get the longURL + redirect
 
@@ -88,7 +167,7 @@ res.redirect("/urls")
 // wild card - any key in our app.
 app.get("/urls/:shortURL", (req, res) => {
   const shortUrlParam = req.params.shortUrl;
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[shortUrlParam] };
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[shortUrlParam], username:req.cookies['user-id'] };
   console.log(urlDatabase[shortUrlParam]);
   res.render("urls_show", templateVars);
 });
