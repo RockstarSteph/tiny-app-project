@@ -10,10 +10,10 @@
 
 
 
-<!-- <h5> Welcome <%= username %> !</h5> -->
+<!-- <h5> Welcome <%= //username %> !</h5> -->
 
-<% if(username){ %>
-   <h5><%= username %></h5>
+<% if(user){ %>
+   <h5><%= user.email %></h5>
      <form method="POST" action="/logout">
        <button type="logout" class="btn btn-primary" style= "margin:1em;" >Logout</button>
      </form>

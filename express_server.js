@@ -37,6 +37,15 @@ function addUserToDb(email, password){
 
 //
 
+const findUser = email => Object.values(usersDatabase).find(userObj => userObj.email === email);
+// const checkPassword = email => Object.values(usersDatabase).find(userObj => {
+//   if (userObj.email === email) {
+//     console.log("userObj.password :",userObj.password)
+//     password = userObj.password;
+//     return password
+//   }
+// });
+
 
 
 var urlDatabase = {
@@ -59,12 +68,16 @@ const usersDatabase = {
 
 //main page diplay - adding a route handler for /urls and res.render to pass to our template
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase, username:req.cookies['user-id']};
+  let templateVars = { urls: urlDatabase, user: usersDatabase[req.cookies['user-id']]};
   res.render("urls_index", templateVars); // param 1 file that's outputed to user. 2nd param is what we're passing to the file
 });
 
+
+
+
 app.post("/logout", (req, res) =>{
   //res.cookie('user-id', null);
+  //res.clearCookie('name', { path: '/admin' });
   res.clearCookie('user-id');
   res.redirect("/login");
 })
@@ -80,14 +93,14 @@ res.redirect("/urls")
 
 // Add page - Get route to display new page for adding urls
 app.get("/urls/new", (req, res) => {
-  let templateVars = { username:req.cookies['user-id']};
+  let templateVars = { user: usersDatabase[req.cookies['user-id']]};
   res.render("urls_new", templateVars);
 });
 
 
 // add the page for login - get route to display the login page
 app.get("/login", (req, res) => {
-  let templateVars = {feeling:"cloudy with chance of meatballs", username:req.cookies['user-id']};
+  let templateVars = {feeling:"cloudy with chance of meatballs", user: usersDatabase[req.cookies['user-id']]};
   res.render("login", templateVars);
 });
 
@@ -103,17 +116,26 @@ app.post("/login", (req, res) => {
   //if (userId)
   console.log({email,password});
 
-  const userId = addUserToDb(email,password)
-  res.cookie('user-id', userId);
-
-  console.log(usersDatabase);
-  res.redirect("/urls");
+  if (!findUser(email)){
+    res.status(403).send("Email not found. You need to register to create your account!");
+  }
+  console.log("email :", email)
+  console.log("password :", findUser(email).password);
+  if (password !== findUser(email).password){
+    res.status(403).send("Incorrect Password");
+  }
+  else {
+    //const userId = addUserToDb(email,password)
+    res.cookie('user-id', findUser(email).id);
+    res.redirect("/urls");
+  }
+  //console.log(usersDatabase);
 
 });
 
 // add the page for registration - get route to display the login page
 app.get("/registration", (req, res) => {
-  let templateVars = { username:req.cookies['user-id']};
+  let templateVars = { user: usersDatabase[req.cookies['user-id']]};
   res.render("registration",templateVars);
 });
 
@@ -126,10 +148,22 @@ app.post("/registration", (req, res) => {
   // let email = req.body.email;
   // let password = req.body.password;
 
-// add new user to the Database
-let aUser = addUserToDb(email, password);
+  if (email===""){
+    res.status(400).send("Email can't be empty");
+  };
+  if (password===""){
+    res.status(400).send("Password can't be empty");
+  };
+  if (findUser(email)){
+    res.status(400).send("email already exists. Login instead.");
+  }
 
-console.log(usersDatabase);
+
+  // add new user to the Database
+  let userId = addUserToDb(email, password);
+  res.cookie('user-id', userId);
+
+  console.log(usersDatabase);
   res.redirect("/urls");
 
 });
@@ -167,7 +201,7 @@ res.redirect("/urls")
 // wild card - any key in our app.
 app.get("/urls/:shortURL", (req, res) => {
   const shortUrlParam = req.params.shortUrl;
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[shortUrlParam], username:req.cookies['user-id'] };
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[shortUrlParam], user: usersDatabase[req.cookies['user-id']] };
   console.log(urlDatabase[shortUrlParam]);
   res.render("urls_show", templateVars);
 });
