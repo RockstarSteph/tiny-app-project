@@ -3,6 +3,7 @@ var express = require("express");
 var app = express();
 var PORT = 8080; // default port 8080
 const uuid = require('uuid/v4');
+const bcrypt = require('bcrypt');
 
 // Setting the Express app to use EJS as its templating engine for the HTML
 app.set("view engine", "ejs");
@@ -42,9 +43,10 @@ urlDatabase[shortUrl] = { longURL:longUrl, id: userId };
 }
 
 
+
 //
 
-const findUser = email => Object.values(usersDatabase).find(userObj => userObj.email === email);
+const findUser = email => Object.values(usersDatabase).find(userObjFromDb => userObjFromDb.email === email);
 // const checkPassword = email => Object.values(usersDatabase).find(userObj => {
 //   if (userObj.email === email) {
 //     console.log("userObj.password :",userObj.password)
@@ -145,6 +147,7 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
 
  const {email, password} = req.body;
+ const hashedPassword = findUser(email).password;
   // let username = req.body.username
   // let email = req.body.email;
   // let password = req.body.password;
@@ -156,17 +159,18 @@ app.post("/login", (req, res) => {
   if (!findUser(email)){
     res.status(403).send("Email not found. You need to register to create your account!");
   }
-  console.log("email :", email)
-  console.log("password :", findUser(email).password);
-  if (password !== findUser(email).password){
-    res.status(403).send("Incorrect Password");
-  }
-  else {
-    //const userId = addUserToDb(email,password)
+ // console.log("email :", email)
+  // console.log("password :", findUser(email).password);
+
+  // verifying password match with hashing upon login
+  if (bcrypt.compareSync(password, hashedPassword)){
     res.cookie('user-id', findUser(email).id);
     res.redirect("/urls");
+  } else {
+
+    res.status(403).send("Incorrect Password");
   }
-  //console.log(usersDatabase);
+
 
 });
 
@@ -181,6 +185,7 @@ app.get("/registration", (req, res) => {
 app.post("/registration", (req, res) => {
 
  const {email, password} = req.body;
+
   // let username = req.body.username
   // let email = req.body.email;
   // let password = req.body.password;
@@ -196,8 +201,10 @@ app.post("/registration", (req, res) => {
   }
 
 
-  // add new user to the Database
-  let userId = addUserToDb(email, password);
+
+  // add new user to the Database with a hashed password
+  let userId = addUserToDb(email, bcrypt.hashSync(password, 10));
+
   res.cookie('user-id', userId);
 
   console.log(usersDatabase);
