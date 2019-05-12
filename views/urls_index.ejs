@@ -9,11 +9,14 @@
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
   <title>TinyApp</title>
-</head><button type="submit" class="btn btn-primary">Shorten my URL</button>
+</head>
+
+
 <body style="font-size:20px; padding:50px;">
 
     <% include ./partials/_header %>
 
+<a href="/urls/new"><button type="submit" class="btn btn-primary">Shorten my URL</button></a>
 
 
 <ul>
@@ -23,7 +26,7 @@
 
 
 
-  <li>  <%= key %> - <%= urls[key]%> </li>
+  <li>  <a href="/u/<%= key %>"><%= key %></a> - <%= urls[key].longURL%> </li>
      <form method="POST" action="/urls/<%=key%>/delete">
        <button type="Delete mothafucka!" class="btn btn-primary" style= "margin:1em;" >Delete that ugly link</button>
      </form>
@@ -32,7 +35,7 @@
        <button type="Edit!" class="btn btn-primary" style="margin:1em;">Edit yo link</button>
     </form>
 <% }; %>
-<li> <a href="#"> link </li>
+<!-- <li> <a href="#"> link </li> -->
 </ul>
 
 

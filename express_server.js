@@ -2,19 +2,30 @@
 var express = require("express");
 var app = express();
 var PORT = 8080; // default port 8080
-const uuid = require('uuid/v4');
-const bcrypt = require('bcrypt');
-
 // Setting the Express app to use EJS as its templating engine for the HTML
 app.set("view engine", "ejs");
+
+const uuid = require('uuid/v4');
+const bcrypt = require('bcrypt');
+var cookieSession = require('cookie-session');
+
+app.use(cookieSession({
+  name: 'session',
+  //keys: [/* secret keys */],
+  secret: 'TinyApp',
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
+
 
 
 //req.body gets data from Form, body-parser will display it
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
-const cookieParser = require('cookie-parser')
-app.use(cookieParser());
+//Cookie-parser replaced with cookie-session for cookie encryption
+//const cookieParser = require('cookie-parser')
+//app.use(cookieParser());
 
 // function to generate ID for short URL when inputing a long URL on form
 // this will be called in our Post route - this is essentiallly what it would provide - urlDatabase[nouveaucodecourt] = valeurduinput
@@ -36,12 +47,23 @@ function addUserToDb(email, password){
 
 
 function addShortURLtoDatabase(id, surl, lurl){
-  let userId = req.cookies['user-id']
+  let userId = req.session['user-id']
 let shortUrl = req.params.shortURL
 let longUrl = req.body.longURL
-urlDatabase[shortUrl] = { longURL:longUrl, id: userId };
+urlDatabase[shortUrl] = { longURL:longUrl, userID: userId };
 }
 
+function urlsForUser(id){
+  const allUrlsForUser = {};
+  for (key in urlDatabase){
+    if (id === urlDatabase[key].userID){
+      allUrlsForUser[key]=urlDatabase[key];
+    }
+  }
+  console.log("id ",id)
+  console.log('all ', allUrlsForUser)
+  return allUrlsForUser
+};
 
 
 //
@@ -83,11 +105,13 @@ const usersDatabase = {
 
 //main page diplay - adding a route handler for /urls and res.render to pass to our template
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase, user: usersDatabase[req.cookies['user-id']]};
+  let id = req.session['user-id'];
+  let templateVars = { urls: urlsForUser(id), user: usersDatabase[req.session['user-id']]};
+
    // res.render("urls_index", templateVars); param 1 file that's outputed to user. 2nd param is what we're passing to the file
 
 
-  if (req.cookies['user-id']) {
+  if (req.session['user-id']) {
     res.render("urls_index", templateVars);
     // let userId = req.cookies['user-id']
     // let shortUrl = generateRandomString()
@@ -106,16 +130,19 @@ app.get("/urls", (req, res) => {
 app.post("/logout", (req, res) =>{
   //res.cookie('user-id', null);
   //res.clearCookie('name', { path: '/admin' });
-  res.clearCookie('user-id');
+  req.session = null;
+  //req.session.destroy();
+ // res.clearCookie('user-id');
   res.redirect("/login");
 })
 
 //adding a Edit function /update short link and redirect to main page
 app.post("/urls/:shortURL/edit", (req, res) =>{
-  if (req.cookies['user-id']) {
   let shortUrl = req.params.shortURL
-  console.log(req.params.shortURL, req.body.longURL)
-  urlDatabase[shortUrl] = req.body.longURL;
+  if (req.session['user-id'] === urlDatabase[shortUrl]['userID']) {
+
+  //console.log(req.params.shortURL, req.body.longURL)
+  urlDatabase[shortUrl].longURL = req.body.longURL;
 
   res.redirect("/urls") } else {
     res.redirect("/login")
@@ -124,8 +151,8 @@ app.post("/urls/:shortURL/edit", (req, res) =>{
 
 // Add page - Get route to display new page for adding urls
 app.get("/urls/new", (req, res) => {
-let templateVars = { user: usersDatabase[req.cookies['user-id']]};
-  if (req.cookies['user-id']) {
+let templateVars = { user: usersDatabase[req.session['user-id']]};
+  if (req.session['user-id']) {
     res.render("urls_new", templateVars);
   } else {
     res.redirect("/login");
@@ -139,7 +166,7 @@ let templateVars = { user: usersDatabase[req.cookies['user-id']]};
 
 // add the page for login - get route to display the login page
 app.get("/login", (req, res) => {
-  let templateVars = {feeling:"cloudy with chance of meatballs", user: usersDatabase[req.cookies['user-id']]};
+  let templateVars = { user: usersDatabase[req.session['user-id']]};
   res.render("login", templateVars);
 });
 
@@ -147,7 +174,6 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
 
  const {email, password} = req.body;
- const hashedPassword = findUser(email).password;
   // let username = req.body.username
   // let email = req.body.email;
   // let password = req.body.password;
@@ -161,10 +187,14 @@ app.post("/login", (req, res) => {
   }
  // console.log("email :", email)
   // console.log("password :", findUser(email).password);
+  const hashedPassword = findUser(email).password;
 
   // verifying password match with hashing upon login
   if (bcrypt.compareSync(password, hashedPassword)){
-    res.cookie('user-id', findUser(email).id);
+
+    //setting the cookie
+    //req.cookie('user-id', findUser(email).id);
+    req.session['user-id'] = findUser(email).id;
     res.redirect("/urls");
   } else {
 
@@ -176,7 +206,7 @@ app.post("/login", (req, res) => {
 
 // add the page for registration - get route to display the login page
 app.get("/registration", (req, res) => {
-  let templateVars = { user: usersDatabase[req.cookies['user-id']]};
+  let templateVars = { user: usersDatabase[req.session['user-id']]};
   res.render("registration",templateVars);
 });
 
@@ -205,7 +235,7 @@ app.post("/registration", (req, res) => {
   // add new user to the Database with a hashed password
   let userId = addUserToDb(email, bcrypt.hashSync(password, 10));
 
-  res.cookie('user-id', userId);
+  req.session['user-id'] = userId;
 
   console.log(usersDatabase);
   res.redirect("/urls");
@@ -216,7 +246,7 @@ app.post("/registration", (req, res) => {
 
 
 
-//Post route for form submission to not our main page yet but yet another stupid display page.
+//Post route for form submission to not our main page yet but another display page.
 //req.body (ties into body parser) - gets data from Form to be able to display it
 // data sent to req.body is from this : from our urls_new file - The input tag has an important attribute as well: name. This attribute identifies the data we are sending; in this case, it adds the key longURL to the data we'll be sending in the body of our POST request.
 // app.post("/urls", (req, res) => {
@@ -227,10 +257,10 @@ app.post("/registration", (req, res) => {
 // });
 
 app.post("/urls", (req, res) => {
-    let userId = req.cookies['user-id']
+    let userId = req.session['user-id']
     let shortUrl = generateRandomString()
     let longUrl = req.body.longURL
-    urlDatabase[shortUrl] = { longURL:longUrl, id: userId };
+    urlDatabase[shortUrl] = { longURL:longUrl, userID: userId };
     console.log(urlDatabase)
     res.redirect("/urls")
 
@@ -247,8 +277,12 @@ app.get("/u/:shortURL", (req, res) =>{
 // adding a delete button on main page for each key/value pair representing short link & long link
 // we're not in the body donc pas req.body - on est dans l'addresse url de la page thats why req.params - parametre de notre requete
 app.post("/urls/:shortURL/delete", (req, res) => {
-console.log(req.params.shortURL, urlDatabase[req.params.shortURL]);
-delete urlDatabase[req.params.shortURL];
+
+if (req.session['user-id'] === urlDatabase[req.params.shortURL].userID){
+  delete urlDatabase[req.params.shortURL];
+}
+
+
 //what's our input
 // what's our output
 // where to say it's a button
@@ -262,7 +296,7 @@ res.redirect("/urls")
 // wild card - any key in our app.
 app.get("/urls/:shortURL", (req, res) => {
   const shortUrlParam = req.params.shortUrl;
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[shortUrlParam], user: usersDatabase[req.cookies['user-id']] };
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[shortUrlParam], user: usersDatabase[req.session['user-id']] };
 
   //addUserIdtoUrlDatabase()
 
